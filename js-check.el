@@ -22,12 +22,11 @@ LINT-BUFFER the output of the lint command."
       (goto-char (point-min))
       (save-match-data
         (while (re-search-forward
-                "^.*:\\([0-9]+\\):\\([0-9]+\\):\\([^:]+\\): \\(.*\\)$"
+                "^.*:\\([0-9]+\\):\\([0-9]+\\):\\(.*\\)$"
                 nil t)
           (let* ((line (string-to-number (match-string 1)))
                  (char-pos (string-to-number (match-string 2)))
-                 (type (match-string 3))
-                 (err-message (match-string 4)))
+                 (err-message (match-string 3)))
             (with-current-buffer source-buffer
               (goto-char (point-min))
               (let* ((line-start (line-beginning-position line))
@@ -41,6 +40,21 @@ LINT-BUFFER the output of the lint command."
                  pos-start pos-end
                  '(point-entered js-check-point-entered))))))))))
 
+(defconst js-check-eslint-rules
+  '(block-scoped-var
+    curly
+    eqeqeq
+    no-multi-spaces
+    ;;no-unused-vars
+    no-use-before-define
+    global-require
+    no-invalid-regexp
+    no-fallthrough
+    no-loop-func
+    camelcase
+    capitalized-comments)
+  "The list of eslint rules that we require.")
+
 (defun js-check (&optional source-buffer)
   "Check a JS file with eslint.
 Optional argument SOURCE-BUFFER is the buffer that the test will be on."
@@ -48,6 +62,11 @@ Optional argument SOURCE-BUFFER is the buffer that the test will be on."
   (with-current-buffer (or source-buffer (current-buffer))
     (let* ((name (buffer-name))
            (src-buffer (current-buffer))
+           (rules (string-join
+                   (mapcar
+                    (lambda (r) (format "%s: 2" (symbol-name r)))
+                    js-check-eslint-rules)
+                   ","))
            (proc (start-process
                   name
                   (let ((buf (format "*jslint-%s*" name)))
@@ -57,8 +76,8 @@ Optional argument SOURCE-BUFFER is the buffer that the test will be on."
                         (current-buffer))))
                   "eslint"
                   "--no-eslintrc"
-                  "-f"
-                  "unix"
+                  "--rule" rules
+                  "-f" "unix"
                   "--parser-options=ecmaVersion:2018"
                   (buffer-file-name))))
       (set-process-sentinel
@@ -84,7 +103,7 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
       (js-check source-buffer))
     (with-current-buffer source-buffer
       (setq jscheck-timer (run-at-time
-                           "5 sec" nil
+                           "2 sec" nil
                            'js-check-timer
                            source-buffer last-buffer-modified-tick)))))
 

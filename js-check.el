@@ -36,9 +36,13 @@ LINT-BUFFER the output of the lint command."
                 (setq js-check-error-overlays (cons olay js-check-error-overlays))
                 (overlay-put olay 'face '(:underline "red"))
                 (overlay-put olay 'js-check-error err-message)
-                (add-text-properties
-                 pos-start pos-end
-                 '(point-entered js-check-point-entered))))))))))
+                (condition-case err
+                    (with-silent-modifications
+                      (add-text-properties
+                       pos-start pos-end
+                       '(point-entered js-check-point-entered)))
+                  (error
+                   (message "js-check couldn't add error")))))))))))
 
 (defconst js-check-eslint-rules
   '(block-scoped-var
@@ -107,6 +111,9 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
                            'js-check-timer
                            source-buffer last-buffer-modified-tick)))))
 
+
+(make-variable-buffer-local 'jscheck-timer)
+
 (defun js-check-init ()
   "Initialize a constantly checking compilation for this buffer."
   (interactive)
@@ -114,7 +121,6 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
   (js-check)
   (let* ((source-buffer (current-buffer))
          (last-buffer-modified-tick (buffer-chars-modified-tick source-buffer)))
-    (make-variable-buffer-local 'jscheck-timer)
     (setq jscheck-timer
           (run-at-time
            "5 sec" nil

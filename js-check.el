@@ -1,5 +1,8 @@
 ;;; js-check   -*- lexical-binding: t -*-
 
+(defvar js-check-error-overlays nil
+  "List of overlays used to highlight errors.")
+
 (make-variable-buffer-local 'js-check-error-overlays)
 
 (defun js-check-point-entered (&rest args)
@@ -42,7 +45,7 @@ LINT-BUFFER the output of the lint command."
                        pos-start pos-end
                        '(point-entered js-check-point-entered)))
                   (error
-                   (message "js-check couldn't add error")))))))))))
+                   (message "js-check couldn't add error because: %s" err)))))))))))
 
 (defconst js-check-eslint-rules
   '(block-scoped-var
@@ -94,6 +97,9 @@ Optional argument SOURCE-BUFFER is the buffer that the test will be on."
       (with-current-buffer (process-buffer proc)
         (compilation-mode)))))
 
+(defvar js-check-timer nil
+  "Timer used to continually check change to a buffer.")
+
 (defun js-check-timer (source-buffer last-buffer-modified-tick)
   "The timer function for running the compilation.
 
@@ -106,10 +112,10 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
       (save-buffer)
       (js-check source-buffer))
     (with-current-buffer source-buffer
-      (setq jscheck-timer (run-at-time
-                           "2 sec" nil
-                           'js-check-timer
-                           source-buffer last-buffer-modified-tick)))))
+      (setq js-check-timer (run-at-time
+                            "2 sec" nil
+                            'js-check-timer
+                            source-buffer last-buffer-modified-tick)))))
 
 
 (make-variable-buffer-local 'jscheck-timer)
@@ -121,7 +127,7 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
   (js-check)
   (let* ((source-buffer (current-buffer))
          (last-buffer-modified-tick (buffer-chars-modified-tick source-buffer)))
-    (setq jscheck-timer
+    (setq js-check-timer
           (run-at-time
            "5 sec" nil
            'js-check-timer

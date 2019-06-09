@@ -38,3 +38,11 @@ and it will start.
 You can of course, put that in your js buffer hook.
 
 
+## Other stuff
+
+I couldn't resist throwing in something that calcs the indent in the
+file and sets it appropriately.
+
+Apparently there is a lot of debate about what the correct indentation
+is for js.
+

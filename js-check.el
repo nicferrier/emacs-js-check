@@ -120,9 +120,27 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
 
 (make-variable-buffer-local 'jscheck-timer)
 
+
+(defun js-check-calc-indent ()
+  "Calculate the indent for a js file."
+  (save-excursion
+    (beginning-of-buffer)
+    (re-search-forward "^\\( \\|\t\\)+[^ \t]+.*" nil t)
+    (let* ((space-end (match-end 1))
+           (line-start (line-beginning-position)))
+      (- space-end line-start))))
+
+(defun js-check-choose-indent ()
+  "Define the indent for a js file and make it local."
+  (let ((indent (js-check-calc-indent)))
+    (make-variable-buffer-local 'js-indent-level)
+    (setq js-indent-level indent)))
+
+
 (defun js-check-init ()
   "Initialize a constantly checking compilation for this buffer."
   (interactive)
+  (js-check-choose-indent)
   ;; kick it off
   (js-check)
   (let* ((source-buffer (current-buffer))

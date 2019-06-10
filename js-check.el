@@ -67,35 +67,37 @@ LINT-BUFFER the output of the lint command."
 Optional argument SOURCE-BUFFER is the buffer that the test will be on."
   (interactive)
   (with-current-buffer (or source-buffer (current-buffer))
-    (let* ((name (buffer-name))
-           (src-buffer (current-buffer))
-           (rules (string-join
-                   (mapcar
-                    (lambda (r) (format "%s: 2" (symbol-name r)))
-                    js-check-eslint-rules)
-                   ","))
-           (proc (start-process
-                  name
-                  (let ((buf (format "*jslint-%s*" name)))
-                    (with-current-buffer (get-buffer-create buf)
-                      (let ((buffer-read-only nil))
-                        (erase-buffer)
-                        (current-buffer))))
-                  "eslint"
-                  "--no-eslintrc"
-                  "--rule" rules
-                  "-f" "unix"
-                  "--parser-options=ecmaVersion:2018"
-                  (buffer-file-name))))
-      (set-process-sentinel
-       proc
-       (lambda (process status)
-         (cond
-          ((or (equal "finished\n" status)
-               (equal "exited abnormally with code 1\n" status))
-           (js-check-parse-errors src-buffer (process-buffer process))))))
-      (with-current-buffer (process-buffer proc)
-        (compilation-mode)))))
+    (condition-case err
+        (let* ((name (buffer-name))
+               (src-buffer (current-buffer))
+               (rules (string-join
+                       (mapcar
+                        (lambda (r) (format "%s: 2" (symbol-name r)))
+                        js-check-eslint-rules)
+                       ","))
+               (proc (start-process
+                      name
+                      (let ((buf (format "*jslint-%s*" name)))
+                        (with-current-buffer (get-buffer-create buf)
+                          (let ((buffer-read-only nil))
+                            (erase-buffer)
+                            (current-buffer))))
+                      "eslint"
+                      "--no-eslintrc"
+                      "--rule" rules
+                      "-f" "unix"
+                      "--parser-options=ecmaVersion:2018"
+                      (buffer-file-name))))
+          (set-process-sentinel
+           proc
+           (lambda (process status)
+             (cond
+              ((or (equal "finished\n" status)
+                   (equal "exited abnormally with code 1\n" status))
+               (js-check-parse-errors src-buffer (process-buffer process))))))
+          (with-current-buffer (process-buffer proc)
+            (compilation-mode)))
+      (error (message "is eslint installed in your project? try: npm i eslint --save-dev")))))
 
 (defvar js-check-timer nil
   "Timer used to continually check change to a buffer.")

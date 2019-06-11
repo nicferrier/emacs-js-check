@@ -1,13 +1,17 @@
 ;;; js-check   -*- lexical-binding: t -*-
 
+(require 'js)
+
+
 (defvar js-check-error-overlays nil
   "List of overlays used to highlight errors.")
 
 (make-variable-buffer-local 'js-check-error-overlays)
 
-(defun js-check-point-entered (&rest args)
+(defun js-check-point-entered (&rest arg)
   "Called by motion hooks on an error.
-Optional argument ARGS all the args."
+Argument ARG event arg."
+  (if arg (message "js-check-point-entered %s" arg))
   (let ((olay (overlays-at (point))))
     (when olay
       (message "js-check-error: %s" (overlay-get (car olay) 'js-check-error)))))
@@ -43,7 +47,7 @@ LINT-BUFFER the output of the lint command."
                     (with-silent-modifications
                       (add-text-properties
                        pos-start pos-end
-                       '(point-entered js-check-point-entered)))
+                       `(point-entered ,(quote js-check-point-entered))))
                   (error
                    (message "js-check couldn't add error because: %s" err)))))))))))
 
@@ -97,7 +101,8 @@ Optional argument SOURCE-BUFFER is the buffer that the test will be on."
                (js-check-parse-errors src-buffer (process-buffer process))))))
           (with-current-buffer (process-buffer proc)
             (compilation-mode)))
-      (error (message "is eslint installed in your project? try: npm i eslint --save-dev")))))
+      (error
+       (message "error: %s ; is eslint installed in your project? try: npm i eslint --save-dev" err)))))
 
 (defvar js-check-timer nil
   "Timer used to continually check change to a buffer.")

@@ -131,7 +131,7 @@ Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
   "Calculate the indent for a js file."
   (save-excursion
     (goto-char (point-min))
-    (re-search-forward "^\\( \\|\t\\)+[^ \t]+.*" nil t)
+    (re-search-forward "^\\( \\|\t\\)+[^ \t]" nil t)
     (let* ((space-end (match-end 1))
            (line-start (line-beginning-position)))
       (- space-end line-start))))

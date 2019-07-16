@@ -112,17 +112,18 @@ Optional argument SOURCE-BUFFER is the buffer that the test will be on."
 
 Argument SOURCE-BUFFER is the buffer the check with be run in.
 Argument LAST-BUFFER-MODIFIED-TICK the last tick of the timer."
-  (let ((new-tick (buffer-chars-modified-tick source-buffer)))
-    (when (> new-tick last-buffer-modified-tick)
-      (message "js-check running...")
-      (setq last-buffer-modified-tick new-tick)
-      (save-buffer)
-      (js-check source-buffer))
-    (with-current-buffer source-buffer
-      (setq js-check-timer (run-at-time
-                            "2 sec" nil
-                            'js-check-timer
-                            source-buffer last-buffer-modified-tick)))))
+  (and (buffer-live-p source-buffer)
+       (let ((new-tick (buffer-chars-modified-tick source-buffer)))
+         (when (> new-tick last-buffer-modified-tick)
+           (message "js-check running...")
+           (setq last-buffer-modified-tick new-tick)
+           (save-buffer)
+           (js-check source-buffer))
+         (with-current-buffer source-buffer
+           (setq js-check-timer (run-at-time
+                                 "2 sec" nil
+                                 'js-check-timer
+                                 source-buffer last-buffer-modified-tick))))))
 
 
 (make-variable-buffer-local 'jscheck-timer)
